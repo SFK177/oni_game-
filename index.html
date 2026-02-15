@@ -93,18 +93,31 @@ body{
 
 <script>
 // ---------------------
-// BGM 簡単ループ音（Web Audio API）
+// メロディ風BGM（Web Audio API）
 // ---------------------
-let audioCtx, oscillator;
+let audioCtx;
+let playing=false;
+
 function startBGM(){
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    // ユーザー操作後に確実に再生
     audioCtx.resume().then(()=>{
-        oscillator = audioCtx.createOscillator();
-        oscillator.type = "square";
-        oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // A4
-        oscillator.connect(audioCtx.destination);
-        oscillator.start();
+        const notes = [440, 523, 659, 523, 440, 523, 440, 659]; // A4, C5, E5...
+        let i = 0;
+
+        function playNote(){
+            if(!playing) return;
+            const osc = audioCtx.createOscillator();
+            osc.type = "square";
+            osc.frequency.setValueAtTime(notes[i], audioCtx.currentTime);
+            osc.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.2); // 0.2秒だけ鳴らす
+
+            i = (i+1) % notes.length;
+            setTimeout(playNote, 300);
+        }
+
+        playNote();
     });
 }
 
@@ -122,9 +135,6 @@ const rankingEl = document.getElementById("ranking");
 let score = 0;
 let notes = [];
 let timeLeft = 30;
-let playing = false;
-const judgeY = window.innerHeight - 150;
-const judgeRange = 100;
 
 // ノーツ画像と列
 const images = [
@@ -191,7 +201,7 @@ function startGame(){
             const colWidth = window.innerWidth/6;
             const colIndex = Math.floor(x / colWidth);
 
-            if(Math.abs(n.y - judgeY) < judgeRange && n.imgData.col === colIndex){
+            if(Math.abs(n.y - (window.innerHeight-150)) < 100 && n.imgData.col === colIndex){
                 score += n.imgData.score;
                 scoreEl.textContent = score;
 
@@ -201,7 +211,7 @@ function startGame(){
                     bombSound.currentTime=0; bombSound.play();
                 }
 
-                if(n.imgData.src==="bomb.png" || n.imgData.src==="oni_yellow.png"){
+                if(n.imgData.score < 0){
                     if(navigator.vibrate) navigator.vibrate(200);
                 }
 
@@ -225,7 +235,6 @@ function startGame(){
 // ---------------------
 function endGame(){
     playing=false;
-    if(oscillator) oscillator.stop();
 
     let ranks = JSON.parse(localStorage.getItem("ranks")||"[]");
     ranks.push(score);
