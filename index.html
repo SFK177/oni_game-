@@ -93,33 +93,11 @@ body{
 
 <script>
 // ---------------------
-// メロディ風BGM（Web Audio API）
+// BGM（MP3ファイル bgm.mp3）
 // ---------------------
-let audioCtx;
-let playing=false;
-
-function startBGM(){
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    audioCtx.resume().then(()=>{
-        const notes = [440, 523, 659, 523, 440, 523, 440, 659]; // A4, C5, E5...
-        let i = 0;
-
-        function playNote(){
-            if(!playing) return;
-            const osc = audioCtx.createOscillator();
-            osc.type = "square";
-            osc.frequency.setValueAtTime(notes[i], audioCtx.currentTime);
-            osc.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.2); // 0.2秒だけ鳴らす
-
-            i = (i+1) % notes.length;
-            setTimeout(playNote, 300);
-        }
-
-        playNote();
-    });
-}
+let bgm = new Audio("bgm.mp3");
+bgm.loop = true;
+bgm.volume = 0.2;
 
 // 効果音
 const hitSound = new Audio("hit.mp3");
@@ -135,15 +113,16 @@ const rankingEl = document.getElementById("ranking");
 let score = 0;
 let notes = [];
 let timeLeft = 30;
+let playing = false;
 
-// ノーツ画像と列
+// ノーツ画像とスコア
 const images = [
-    {src:"bomb.png", score:-100, col:0, sound:"bomb"},
-    {src:"oni_blue.png", score:100, col:1, sound:"hit"},
-    {src:"oni_green.png", score:100, col:2, sound:"hit"},
-    {src:"oni_orange.png", score:100, col:3, sound:"hit"},
-    {src:"oni_purple.png", score:100, col:4, sound:"hit"},
-    {src:"oni_yellow.png", score:-100, col:5, sound:"bomb"}
+    {src:"bomb.png", score:-100, sound:"bomb"},
+    {src:"oni_blue.png", score:100, sound:"hit"},
+    {src:"oni_green.png", score:100, sound:"hit"},
+    {src:"oni_orange.png", score:100, sound:"hit"},
+    {src:"oni_purple.png", score:100, sound:"hit"},
+    {src:"oni_yellow.png", score:-100, sound:"bomb"}
 ];
 
 // ---------------------
@@ -153,7 +132,8 @@ startBtn.addEventListener("click", ()=>{
     startBtn.style.display="none";
     game.style.display="block";
     playing = true;
-    startBGM();
+
+    bgm.play().catch(()=>console.log("ユーザー操作後に再生")); 
     startGame();
 });
 
@@ -161,20 +141,22 @@ function startGame(){
     // ノーツ生成
     setInterval(()=>{
         if(!playing) return;
+
         const n = document.createElement("div");
         n.className="note";
         n.y = -100;
         const img = images[Math.floor(Math.random()*images.length)];
-        n.imgData = img;
-
+        const colIndex = Math.floor(Math.random()*6); // 0〜5列ランダム
         const colWidth = window.innerWidth/6;
-        n.x = img.col * colWidth + (colWidth-100)/2;
+        n.x = colIndex * colWidth + (colWidth-100)/2;
         n.style.left = n.x+"px";
         n.style.top = n.y+"px";
         n.style.backgroundImage = `url(${img.src})`;
 
+        n.imgData = { ...img, col:colIndex };
         game.appendChild(n);
         notes.push(n);
+
     },600);
 
     // ノーツ落下
@@ -209,9 +191,6 @@ function startGame(){
                     hitSound.currentTime=0; hitSound.play();
                 } else {
                     bombSound.currentTime=0; bombSound.play();
-                }
-
-                if(n.imgData.score < 0){
                     if(navigator.vibrate) navigator.vibrate(200);
                 }
 
@@ -235,6 +214,8 @@ function startGame(){
 // ---------------------
 function endGame(){
     playing=false;
+    bgm.pause();
+    bgm.currentTime=0;
 
     let ranks = JSON.parse(localStorage.getItem("ranks")||"[]");
     ranks.push(score);
