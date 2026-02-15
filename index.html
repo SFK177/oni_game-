@@ -15,12 +15,14 @@ body{
     color:white;
     text-align:center;
 }
+
 #game{
     position:relative;
     width:100vw;
     height:100vh;
     display:none;
 }
+
 .note{
     position:absolute;
     width:100px;
@@ -28,6 +30,7 @@ body{
     background-size:cover;
     border-radius:10%;
 }
+
 #judge{
     position:absolute;
     bottom:120px;
@@ -35,6 +38,7 @@ body{
     height:100px;
     border-top:4px solid yellow;
 }
+
 .column{
     position:absolute;
     top:0;
@@ -47,23 +51,31 @@ body{
 .column3{left:49.98%; width:16.66%; background:orange;}
 .column4{left:66.64%; width:16.66%; background:purple;}
 .column5{left:83.3%; width:16.7%; background:yellow;}
+
 #ui{
     position:absolute;
     top:10px;
     left:10px;
 }
+
 #ranking{
     position:absolute;
     right:10px;
     top:10px;
     font-size:14px;
 }
+
+/* スタートボタンを画面中央に固定 */
 #startBtn{
-    margin-top:40vh;
-    padding:20px 40px;
-    font-size:24px;
-    border-radius:12px;
-    cursor:pointer;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 20px 40px;
+    font-size: 24px;
+    border-radius: 12px;
+    cursor: pointer;
+    z-index: 1000;
 }
 </style>
 </head>
