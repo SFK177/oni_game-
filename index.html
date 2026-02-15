@@ -15,14 +15,12 @@ body{
     color:white;
     text-align:center;
 }
-
 #game{
     position:relative;
     width:100vw;
     height:100vh;
     display:none;
 }
-
 .note{
     position:absolute;
     width:100px;
@@ -30,7 +28,6 @@ body{
     background-size:cover;
     border-radius:10%;
 }
-
 #judge{
     position:absolute;
     bottom:120px;
@@ -38,7 +35,6 @@ body{
     height:100px;
     border-top:4px solid yellow;
 }
-
 .column{
     position:absolute;
     top:0;
@@ -51,21 +47,17 @@ body{
 .column3{left:49.98%; width:16.66%; background:orange;}
 .column4{left:66.64%; width:16.66%; background:purple;}
 .column5{left:83.3%; width:16.7%; background:yellow;}
-
 #ui{
     position:absolute;
     top:10px;
     left:10px;
 }
-
 #ranking{
     position:absolute;
     right:10px;
     top:10px;
     font-size:14px;
 }
-
-/* スタートボタンを画面中央に固定 */
 #startBtn{
     position: fixed;
     top: 50%;
@@ -79,7 +71,6 @@ body{
 }
 </style>
 </head>
-
 <body>
 <h1>オニたいじゲーム</h1>
 <button id="startBtn">スタート</button>
@@ -92,7 +83,6 @@ body{
     <div id="ranking"></div>
     <div id="judge"></div>
 
-    <!-- 列色分け -->
     <div class="column column0"></div>
     <div class="column column1"></div>
     <div class="column column2"></div>
@@ -101,21 +91,27 @@ body{
     <div class="column column5"></div>
 </div>
 
-<!-- BGM -->
-<audio id="bgm" src="bgm.mp3" loop></audio>
-<!-- 効果音 -->
-<audio id="hitSound" src="hit.mp3"></audio>
-<audio id="bombSound" src="bomb.mp3"></audio>
-
 <script>
+// Web Audio APIで簡単BGM作成
+let audioCtx, oscillator;
+function startBGM(){
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    oscillator = audioCtx.createOscillator();
+    oscillator.type = "square";
+    oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // A4
+    oscillator.connect(audioCtx.destination);
+    oscillator.start();
+}
+
+// 効果音
+const hitSound = new Audio("hit.mp3");
+const bombSound = new Audio("bomb.mp3");
+
 const startBtn = document.getElementById("startBtn");
 const game = document.getElementById("game");
 const scoreEl = document.getElementById("score");
 const timeEl = document.getElementById("time");
 const rankingEl = document.getElementById("ranking");
-const bgm = document.getElementById("bgm");
-const hitSound = document.getElementById("hitSound");
-const bombSound = document.getElementById("bombSound");
 
 let score = 0;
 let notes = [];
@@ -124,7 +120,6 @@ let playing = false;
 const judgeY = window.innerHeight - 150;
 const judgeRange = 100;
 
-// ノーツ画像と列
 const images = [
     {src:"bomb.png", score:-100, col:0, sound:"bomb"},
     {src:"oni_blue.png", score:100, col:1, sound:"hit"},
@@ -139,7 +134,7 @@ startBtn.addEventListener("click", ()=>{
     startBtn.style.display="none";
     game.style.display="block";
     playing = true;
-    bgm.play().catch(()=>{});
+    startBGM();
     startGame();
 });
 
@@ -155,7 +150,6 @@ function startGame(){
 
         const colWidth = window.innerWidth/6;
         n.x = img.col * colWidth + (colWidth-100)/2;
-
         n.style.left = n.x+"px";
         n.style.top = n.y+"px";
         n.style.backgroundImage = `url(${img.src})`;
@@ -192,16 +186,12 @@ function startGame(){
                 score += n.imgData.score;
                 scoreEl.textContent = score;
 
-                // 効果音再生
                 if(n.imgData.sound === "hit"){
-                    hitSound.currentTime=0;
-                    hitSound.play();
+                    hitSound.currentTime=0; hitSound.play();
                 } else {
-                    bombSound.currentTime=0;
-                    bombSound.play();
+                    bombSound.currentTime=0; bombSound.play();
                 }
 
-                // 赤・黄色バイブ
                 if(n.imgData.src==="bomb.png" || n.imgData.src==="oni_yellow.png"){
                     if(navigator.vibrate) navigator.vibrate(200);
                 }
@@ -221,11 +211,10 @@ function startGame(){
     },1000);
 }
 
-// ランキング保存（ローカル）
+// ランキング
 function endGame(){
     playing=false;
-    bgm.pause();
-    bgm.currentTime=0;
+    if(oscillator) oscillator.stop();
 
     let ranks = JSON.parse(localStorage.getItem("ranks")||"[]");
     ranks.push(score);
